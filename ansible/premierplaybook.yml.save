@@ -1,0 +1,133 @@
+---
+- name: Setting up prerequsites for the front-end instance
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: "Creating /home/wordpress-data directory on front-end and backEnd instances"
+      file:
+        path: /home/wordpress-data
+        state: directory
+#là on configure les  instances Backend
+- name: Configuring instances backEnd
+  hosts: backends
+  gather_facts: yes
+  vars:
+    test: "Mon user eductive19: le meilleur !"
+  tasks:
+    - name: Verify if Nginx package is installed
+      apt:
+        update_cache: true
+        name: nginx
+        state: latest
+    - name: Configure kitten page
+      template:
+        src: templates/index.html.j2
+        dest: /var/www/html/index.html
+    - name: Configure Nginx to listen on the vRack
+      template:
+        src: templates/default.j2
+        dest: /etc/nginx/sites-available/default
+      notify:
+        - Restart Nginx
+    #installation et configuration de docker et aussi de ses dependances
+    - name: Verify if Docker dependencies are installed
+      apt:
+        update_cache: true
+        name:
+          - lsb-release
+          - apt-transport-https
+          - gnupg
+          - ca-certificates
+        state: latest
+    - name: verify if key is succesfully installed
+      apt_key:
+        url: "https://download.docker.com/linux/debian/gpg"
+    - name: Ensure repository is successfully updated
+      apt_repository:
+        repo: "deb https://download.docker.com/linux/debian bullseye stable"
+    - name: Ensure successful installation of Docker
+      apt:
+        name:
+          - docker
+          - docker-compose
+          - docker-compose-plugin
+        state: latest
+    - name: verify if ifconfig.io  if installed on the docker
+      copy:
+        src: templates/ifconfig.io
+        dest: /home/debian/
+
+#Configurer l'instance Front-End
+- name: Install and configure HaProxy on Front-End
+  hosts: front
+  tasks:
+    #installation et configuration de HaProxy
+    - name: Ensure installation and update of HaProxy
+      apt:
+        name: haproxy
+        state: latest
+    - name: Ensure HaProxy has started
+      service:
+        name: haproxy
+        state: started
+    - name: Configurate HaProxy
+      template:
+        src: templates/haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+      notify:
+        - Reload haproxy
+    - name: Ensure installation of NFS server
+      apt:
+        name:
+          - nfs-kernel-server
+          - nfs-common
+        state: latest
+    - name: Ensure nfs service is running
+      service:
+        name: nfs-kernel-server
+        state: started
+    - name: Copy /etc/exports file
+      template:
+        src: templates/exports.j2
+        dest: /etc/exports
+      notify:
+        - Restart nfs-kernel-server
+#gestion des handlers
+  handlers:
+    - name: Reload haproxy
+      ansible.builtin.service:
+        name: haproxy
+        state: reloaded
+    - name: Restart nfs-kernel-server
+      ansible.builtin.service:
+        name: nfs-kernel-server
+        state: restarted
+
+
+    - name: Ensure deployment of image ifconfig.io
+      community.docker.docker_compose:
+        project_name: ifconfig.io
+        project_src: /home/debian/ifconfig.io/
+
+    - name: installation of nfs package
+      apt:
+        name: nfs-common
+        state: latest
+    - name: mounting NFS clients to NFS server
+      mount:
+        src: 192.168.19.254:/home/wordpress-data
+        path: /home/wordpress-data
+        fstype: nfs
+        state: mounted
+      notify:
+        - Restart nfs-common
+  #handlers des differentes composantes installees
+  handlers:
+    - name: Restart Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+    - name: Restart nfs-common
+      service:
+        name: nfs-common
+        state: reloaded
