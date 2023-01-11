@@ -22,6 +22,7 @@ variable "backNumberOfInstances"{
 #variable nom de service pour le vRack
 variable "service_name" {
   type    = string
+  default ="vRackService"
 }
 
 #identifiant vrack

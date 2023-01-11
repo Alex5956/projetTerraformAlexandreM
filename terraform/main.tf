@@ -1,10 +1,10 @@
-resource "ovh_cloud_projet_reseauPrive" "reseauPrive"{
+resource "ovh_cloud_projet_network_private" "reseauPrive"{
   name="resauPrive${var.nomInstance}"
   service_name= var.service_name
   regions= var.region
   vlanId= var.vlanId
 }
-resource "ovh_cloud_project_network_sousreseauPrive" "sousReseau_GRA"{
+resource "ovh_cloud_project_network_private_subnet" "sousReseau_GRA"{
   networkId= ovh_cloud_projet_reseauPrive.reseauPrive.id
   service_name= var.service_name
   network=var.vlan_dhcp_reseau
@@ -14,7 +14,7 @@ resource "ovh_cloud_project_network_sousreseauPrive" "sousReseau_GRA"{
   provider=ovh
   no_gateway= true
 }
-resource "ovh_cloud_projet_reseauPrive_sousReseau" "sousReseau_SGB"{
+resource "ovh_cloud_projet_network_private_subnet" "sousReseau_SGB"{
   network_id = ovh_cloud_project_reseauPrive.reseauPrive.id
   service_name = var.service_name
   region= element(var.region,1)
@@ -48,15 +48,15 @@ resource  "openstack_compute_instance_v2" "front" {
     name= "Ext-Net"
   }
   network{
-    name= ovh_cloud_projet_reseauPrive.reseauPrive.name
+    name= ovh_cloud_projet_network_private.private_network.name
     fixed_ip_v4 ="192.168.${var.vlanId}.254"
     }
-  depends_on = [ovh_cloud_projet_sousReseauPrive.sousReseau_GRA]
+  depends_on = [ovh_cloud_projet_network_private_subnet.sousReseau_GRA]
   }
   
   resource "openstack_compute_instance_v2" "back_GRA"{
     count= var.backNumberOfInstances
-    name= "backend_$(var.instance_name}_GRA_${count.index+2}"
+    name= "backend_$(var.instanceName}_GRA_${count.index+2}"
     provider= openstack.ovh
     flavor_name=var.flavorName
     image_name= var.imageName
@@ -66,14 +66,14 @@ resource  "openstack_compute_instance_v2" "front" {
       name= "Ext-Net"
       }
     network{
-      name=ovh_cloud_projet_reseauPrive.reseauprive.name
+      name=ovh_cloud_projet_network_private.reseauprive.name
       fixed_ip_v4="192.168.${var.vlanId}.${count.index+1}"
       }
-     depends_on=[ovh_cloud_projet_sousReseauPrive.sousReseau_GRA]
+     depends_on=[ovh_cloud_projet_network_private_subnet.sousReseau_GRA]
      }
   resource "openstack_compute_instance_v2" "back_SGB"{
     count= var.BackNumberOfInstances
-    name = "backend_${var.instance_name}_sbg_${count.index+1}" 
+    name = "backend_${var.instanceName}_sbg_${count.index+1}" 
     provider= openstack.ovh
     image_name= var.image_name
     flavor_name=var.falvorName
@@ -82,10 +82,10 @@ resource  "openstack_compute_instance_v2" "front" {
     key_pair= openstack_compute_keypair_v2.test_keypair[1].name
     
     network{
-      name = ovh_cloud_projet_reseauPrive.reseauPrive.name
+      name = ovh_cloud_projet_network_private.reseauPrive.name
       fixed_ip_v4="192.168.${var.vlanId}.${count.index+101}"
       }
-    depends_on = [ovh_cloud_projet_sousReseauPrive.sousReseau_SGB]
+    depends_on = [ovh_cloud_projet_network_private_subnet.sousReseau_SGB]
     }
     
     
