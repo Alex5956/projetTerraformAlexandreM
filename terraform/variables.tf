@@ -44,7 +44,7 @@ variable "vlan_dhcp_finish" {
 }
 
 #adresse CIDR du réseau
-variable "vlan_dhcp_network" {
+variable "vlan_dhcp_reseau" {
   type    = string
   default = "192.168.19.0/24"
 }
