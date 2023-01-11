@@ -19,31 +19,27 @@ variable "backNumberOfInstances"{
   default=1
 }
 
-#variable nom de service pour le vRack
 variable "service_name" {
   type    = string
   default ="vRackService"
 }
 
-#identifiant vrack
 variable  "vlanId" {
   type    = number
   default = 19
 }
 
-#adresse de départ dhcp
 variable "vlan_dhcp_start" {
   type    = string
   default = "192.168.19.1"
 }
 
-#adresse de fin de plage dhcp
+
 variable "vlan_dhcp_finish" {
   type    = string
   default = "192.168.19.200"
 }
 
-#adresse CIDR du réseau
 variable "vlan_dhcp_reseau" {
   type    = string
   default = "192.168.19.0/24"

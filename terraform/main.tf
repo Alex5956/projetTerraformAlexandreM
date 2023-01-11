@@ -11,7 +11,7 @@ resource "ovh_cloud_project_network_private_subnet" "subnetwork_gra"{
   region= element(var.region,0)
   start= var.vlan_dhcp_start
   end= var.vlan_dhcp_finish
-  provider=ovh
+  provider=ovh.ovh
   no_gateway= true
 }
 resource "ovh_cloud_project_network_private_subnet" "subnetwork_sbg"{
