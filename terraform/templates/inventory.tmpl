@@ -6,13 +6,14 @@ front:
       ansible_become: True
 backends:
   hosts:
-%{for node in back_GRA ~}
+%{for node in backends_gra ~}
     ${node}:
       ansible_user: debian
       ansible_become: True
 %{endfor ~}
-%{for node in back_SGB ~}
+%{for node in backends_sbg ~}
     ${node}:
       ansible_user: debian
       ansible_become: True
 %{endfor ~}
+
